@@ -25,3 +25,24 @@ embed_youtube("sYsw0KVRjCM")
 ```
 
 
+## some thoughts as we begin to collaborate
+1.) We will likely be looking at some common data sets like population by county, city, etc. A good thing for us to agree upon would be a common structure to follow, so we can leverage the tidy framework. This might include making sure each data set has the appropriate metadata about where it came from and when. That could be included in r scripts that use the data. 
+
+2.) Here are some suggestions for how we might code our data:
+county == county name [this should be a factor]
+co_FIPS == this should be the FIPS code [also a factor] ??should we break this into separate county and city variables?
+ci_FIPS == city FIPS code [we want to be able to roll cities up into counties]  I don't have a good answer for what to do with cities in multiple counities..
+pop == population [integer]
+year == year [integer]
+month == integer
+day == integer
+city == city name
+
+3.) Per the tidy rules: https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html
+Each variable forms a column.
+
+Each observation forms a row.
+
+Each type of observational unit forms a table.
+
+
