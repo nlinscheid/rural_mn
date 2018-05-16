@@ -1,0 +1,27 @@
+---
+title: "Research Mixtape"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, echo=FALSE, message=FALSE}
+require("vembedr")
+library(vembedr)
+```
+
+
+# Finally up and running
+
+Well, it looks like we both now have the magic combination of git, rstudio, and r up and running. 
+
+I thought this might be a place to store some tips, tricks, and citations. Like a really handy script or something that was helpful. Or a link to an article, or whatever. Let's just treat this as some scratch paper.
+
+## The dude abides
+```{r, echo=FALSE}
+
+embed_youtube("sYsw0KVRjCM")
+
+```
+
+
