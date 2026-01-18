@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Work Analysis App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Cognitive Work Analysis Tool</h1>
+            <p class="subtitle">Systematic framework for analyzing complex sociotechnical systems</p>
+        </header>
+
+        <nav class="phase-nav">
+            <button class="phase-btn active" data-phase="wda">Work Domain Analysis</button>
+            <button class="phase-btn" data-phase="conta">Control Task Analysis</button>
+            <button class="phase-btn" data-phase="stra">Strategies Analysis</button>
+            <button class="phase-btn" data-phase="soca">Social Organization</button>
+            <button class="phase-btn" data-phase="wca">Worker Competencies</button>
+        </nav>
+
+        <main>
+            <!-- Work Domain Analysis Phase -->
+            <section id="wda" class="phase-section active">
+                <h2>Work Domain Analysis (WDA)</h2>
+                <p class="phase-description">Define the functional purpose, values, functions, processes, and physical objects of the work domain.</p>
+
+                <div class="quick-add">
+                    <h3>Quick Add Node</h3>
+                    <input type="text" id="wda-quick-name" placeholder="Node name">
+                    <select id="wda-quick-level">
+                        <option value="functional-purpose">Functional Purpose</option>
+                        <option value="values">Values & Priority Measures</option>
+                        <option value="functions">Purpose-Related Functions</option>
+                        <option value="processes">Object-Related Processes</option>
+                        <option value="physical">Physical Objects</option>
+                    </select>
+                    <button onclick="quickAddNode('wda')">+ Quick Add</button>
+                </div>
+
+                <div class="data-entry">
+                    <h3>Add Detailed Node</h3>
+                    <form id="wda-form">
+                        <label>Node Name: <input type="text" name="name" required></label>
+                        <label>Abstraction Level:
+                            <select name="level">
+                                <option value="functional-purpose">Functional Purpose</option>
+                                <option value="values">Values & Priority Measures</option>
+                                <option value="functions">Purpose-Related Functions</option>
+                                <option value="processes">Object-Related Processes</option>
+                                <option value="physical">Physical Objects</option>
+                            </select>
+                        </label>
+                        <label>Description: <textarea name="description" rows="3"></textarea></label>
+                        <label>Parent Node:
+                            <select name="parent" id="wda-parent">
+                                <option value="">None</option>
+                            </select>
+                        </label>
+                        <button type="submit">Add Node</button>
+                    </form>
+                </div>
+
+                <div class="data-display">
+                    <h3>WDA Nodes <span class="count" id="wda-count">0</span></h3>
+                    <div id="wda-list" class="node-list"></div>
+                </div>
+            </section>
+
+            <!-- Control Task Analysis Phase -->
+            <section id="conta" class="phase-section">
+                <h2>Control Task Analysis (ConTA)</h2>
+                <p class="phase-description">Identify what needs to be done, independent of who does it or how it's done.</p>
+
+                <div class="quick-add">
+                    <h3>Quick Add Task</h3>
+                    <input type="text" id="conta-quick-name" placeholder="Task name">
+                    <select id="conta-quick-type">
+                        <option value="goal">Goal</option>
+                        <option value="constraint">Constraint</option>
+                        <option value="decision">Decision</option>
+                        <option value="activity">Activity</option>
+                    </select>
+                    <button onclick="quickAddNode('conta')">+ Quick Add</button>
+                </div>
+
+                <div class="data-entry">
+                    <h3>Add Detailed Task</h3>
+                    <form id="conta-form">
+                        <label>Task Name: <input type="text" name="name" required></label>
+                        <label>Task Type:
+                            <select name="type">
+                                <option value="goal">Goal</option>
+                                <option value="constraint">Constraint</option>
+                                <option value="decision">Decision</option>
+                                <option value="activity">Activity</option>
+                            </select>
+                        </label>
+                        <label>Description: <textarea name="description" rows="3"></textarea></label>
+                        <label>Related WDA Node:
+                            <select name="wdaNode" id="conta-wda-link">
+                                <option value="">None</option>
+                            </select>
+                        </label>
+                        <label>Prerequisites: <input type="text" name="prerequisites" placeholder="Comma-separated task IDs"></label>
+                        <button type="submit">Add Task</button>
+                    </form>
+                </div>
+
+                <div class="data-display">
+                    <h3>ConTA Tasks <span class="count" id="conta-count">0</span></h3>
+                    <div id="conta-list" class="node-list"></div>
+                </div>
+            </section>
+
+            <!-- Strategies Analysis Phase -->
+            <section id="stra" class="phase-section">
+                <h2>Strategies Analysis (StrA)</h2>
+                <p class="phase-description">Document the different ways tasks can be accomplished.</p>
+
+                <div class="quick-add">
+                    <h3>Quick Add Strategy</h3>
+                    <input type="text" id="stra-quick-name" placeholder="Strategy name">
+                    <select id="stra-quick-type">
+                        <option value="procedure">Procedure</option>
+                        <option value="heuristic">Heuristic</option>
+                        <option value="algorithm">Algorithm</option>
+                        <option value="improvisation">Improvisation</option>
+                    </select>
+                    <button onclick="quickAddNode('stra')">+ Quick Add</button>
+                </div>
+
+                <div class="data-entry">
+                    <h3>Add Detailed Strategy</h3>
+                    <form id="stra-form">
+                        <label>Strategy Name: <input type="text" name="name" required></label>
+                        <label>Strategy Type:
+                            <select name="type">
+                                <option value="procedure">Procedure</option>
+                                <option value="heuristic">Heuristic</option>
+                                <option value="algorithm">Algorithm</option>
+                                <option value="improvisation">Improvisation</option>
+                            </select>
+                        </label>
+                        <label>Description: <textarea name="description" rows="3"></textarea></label>
+                        <label>Related Task:
+                            <select name="contaTask" id="stra-conta-link">
+                                <option value="">None</option>
+                            </select>
+                        </label>
+                        <label>Efficiency (1-5): <input type="number" name="efficiency" min="1" max="5" value="3"></label>
+                        <label>Flexibility (1-5): <input type="number" name="flexibility" min="1" max="5" value="3"></label>
+                        <button type="submit">Add Strategy</button>
+                    </form>
+                </div>
+
+                <div class="data-display">
+                    <h3>StrA Strategies <span class="count" id="stra-count">0</span></h3>
+                    <div id="stra-list" class="node-list"></div>
+                </div>
+            </section>
+
+            <!-- Social Organization & Cooperation Analysis Phase -->
+            <section id="soca" class="phase-section">
+                <h2>Social Organization & Cooperation Analysis (SOCA)</h2>
+                <p class="phase-description">Analyze how work is distributed among actors and how they cooperate.</p>
+
+                <div class="quick-add">
+                    <h3>Quick Add Actor/Team</h3>
+                    <input type="text" id="soca-quick-name" placeholder="Actor/Team name">
+                    <select id="soca-quick-type">
+                        <option value="individual">Individual</option>
+                        <option value="team">Team</option>
+                        <option value="department">Department</option>
+                        <option value="automation">Automation</option>
+                    </select>
+                    <button onclick="quickAddNode('soca')">+ Quick Add</button>
+                </div>
+
+                <div class="data-entry">
+                    <h3>Add Detailed Actor/Team</h3>
+                    <form id="soca-form">
+                        <label>Actor/Team Name: <input type="text" name="name" required></label>
+                        <label>Type:
+                            <select name="type">
+                                <option value="individual">Individual</option>
+                                <option value="team">Team</option>
+                                <option value="department">Department</option>
+                                <option value="automation">Automation</option>
+                            </select>
+                        </label>
+                        <label>Description: <textarea name="description" rows="3"></textarea></label>
+                        <label>Assigned Tasks:
+                            <select name="contaTasks" id="soca-conta-link" multiple>
+                            </select>
+                        </label>
+                        <label>Communication Channels: <input type="text" name="communication" placeholder="e.g., Radio, Email, Face-to-face"></label>
+                        <button type="submit">Add Actor/Team</button>
+                    </form>
+                </div>
+
+                <div class="data-display">
+                    <h3>SOCA Actors/Teams <span class="count" id="soca-count">0</span></h3>
+                    <div id="soca-list" class="node-list"></div>
+                </div>
+            </section>
+
+            <!-- Worker Competencies Analysis Phase -->
+            <section id="wca" class="phase-section">
+                <h2>Worker Competencies Analysis (WCA)</h2>
+                <p class="phase-description">Define the cognitive skills and knowledge required for effective performance.</p>
+
+                <div class="quick-add">
+                    <h3>Quick Add Competency</h3>
+                    <input type="text" id="wca-quick-name" placeholder="Competency name">
+                    <select id="wca-quick-type">
+                        <option value="skill">Skill-Based</option>
+                        <option value="rule">Rule-Based</option>
+                        <option value="knowledge">Knowledge-Based</option>
+                    </select>
+                    <button onclick="quickAddNode('wca')">+ Quick Add</button>
+                </div>
+
+                <div class="data-entry">
+                    <h3>Add Detailed Competency</h3>
+                    <form id="wca-form">
+                        <label>Competency Name: <input type="text" name="name" required></label>
+                        <label>Behavior Level:
+                            <select name="level">
+                                <option value="skill">Skill-Based</option>
+                                <option value="rule">Rule-Based</option>
+                                <option value="knowledge">Knowledge-Based</option>
+                            </select>
+                        </label>
+                        <label>Description: <textarea name="description" rows="3"></textarea></label>
+                        <label>Required For Strategy:
+                            <select name="straStrategy" id="wca-stra-link">
+                                <option value="">None</option>
+                            </select>
+                        </label>
+                        <label>Required For Actor:
+                            <select name="socaActor" id="wca-soca-link">
+                                <option value="">None</option>
+                            </select>
+                        </label>
+                        <label>Training Required: <input type="text" name="training"></label>
+                        <button type="submit">Add Competency</button>
+                    </form>
+                </div>
+
+                <div class="data-display">
+                    <h3>WCA Competencies <span class="count" id="wca-count">0</span></h3>
+                    <div id="wca-list" class="node-list"></div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="action-buttons">
+                <button onclick="exportAllData()" class="btn-primary">Export All Data (JSON)</button>
+                <button onclick="exportEdgeLists()" class="btn-primary">Export Edge Lists (CSV)</button>
+                <button onclick="importData()" class="btn-secondary">Import Data</button>
+                <button onclick="clearAllData()" class="btn-danger">Clear All Data</button>
+            </div>
+            <div class="stats">
+                <p>Total Nodes: <span id="total-nodes">0</span> | Total Connections: <span id="total-connections">0</span></p>
+            </div>
+        </footer>
+    </div>
+
+    <input type="file" id="file-input" style="display: none;" accept=".json">
+
+    <script src="app.js"></script>
+</body>
+</html>
