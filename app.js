@@ -58,7 +58,7 @@ const colors = {
 document.addEventListener('DOMContentLoaded', function() {
     loadData();
     initializeNetworks();
-    updateAllDisplays();
+    updateDropdowns();
     updateStats();
 });
 
@@ -125,7 +125,6 @@ function addNode(phase) {
     nameInput.value = '';
 
     saveData();
-    updateDisplay(phase);
     updateNetwork(phase);
     updateDropdowns();
 
@@ -133,16 +132,25 @@ function addNode(phase) {
     if (networks.integrated) {
         updateNetwork('integrated');
     }
+
+    // Close panel after adding
+    const panel = document.getElementById('panel-content');
+    const icon = document.getElementById('toggle-icon');
+    if (panel.classList.contains('open')) {
+        setTimeout(() => {
+            panel.classList.remove('open');
+            icon.textContent = '➕';
+        }, 300);
+    }
 }
 
-// Delete node
+// Delete node (can be called from network click - future feature)
 function deleteNode(phase, id) {
     const index = cwaData[phase].findIndex(n => n.id === id);
     if (index > -1) {
         if (confirm(`Delete "${cwaData[phase][index].name}"?`)) {
             cwaData[phase].splice(index, 1);
             saveData();
-            updateDisplay(phase);
             updateNetwork(phase);
             updateDropdowns();
             if (networks.integrated) {
@@ -150,38 +158,6 @@ function deleteNode(phase, id) {
             }
         }
     }
-}
-
-// Update node list display
-function updateDisplay(phase) {
-    const listEl = document.getElementById(`${phase}-nodes`);
-    if (!listEl) return;
-
-    listEl.innerHTML = '';
-    cwaData[phase].forEach(node => {
-        const div = document.createElement('div');
-        div.className = 'node-item';
-
-        const typeOrLevel = node.level || node.type || '';
-        const badge = typeOrLevel ? `<span class="badge" style="background:${colors[phase][typeOrLevel]}">${typeOrLevel}</span>` : '';
-
-        div.innerHTML = `
-            <div class="node-item-header">
-                <strong>${node.name}</strong>
-                ${badge}
-            </div>
-            <button onclick="deleteNode('${phase}', '${node.id}')" class="delete-btn">×</button>
-        `;
-
-        listEl.appendChild(div);
-    });
-}
-
-// Update all displays
-function updateAllDisplays() {
-    ['wda', 'conta', 'stra', 'soca', 'wca'].forEach(phase => {
-        updateDisplay(phase);
-    });
 }
 
 // Update dropdowns
@@ -443,16 +419,25 @@ function switchPhase(phase) {
     currentPhase = phase;
 
     // Update tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    document.querySelectorAll('.tab').forEach(btn => {
         btn.classList.remove('active');
     });
     document.querySelector(`[data-phase="${phase}"]`).classList.add('active');
 
-    // Update sections
-    document.querySelectorAll('.phase-content').forEach(section => {
-        section.classList.remove('active');
+    // Update phase views
+    document.querySelectorAll('.phase-view').forEach(view => {
+        view.classList.remove('active');
     });
-    document.getElementById(`${phase}-phase`).classList.add('active');
+    document.getElementById(`${phase}-view`).classList.add('active');
+
+    // Update entry forms in floating panel
+    document.querySelectorAll('.entry-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    const entryForm = document.getElementById(`${phase}-entry`);
+    if (entryForm) {
+        entryForm.style.display = 'block';
+    }
 
     // Update network if needed
     if (networks[phase]) {
@@ -460,21 +445,35 @@ function switchPhase(phase) {
     }
 }
 
-// Fit view
-function fitView(phase) {
-    if (networks[phase]) {
-        networks[phase].fit({ animation: true });
+// Toggle floating panel
+function togglePanel() {
+    const panel = document.getElementById('panel-content');
+    const icon = document.getElementById('toggle-icon');
+
+    if (panel.classList.contains('open')) {
+        panel.classList.remove('open');
+        icon.textContent = '➕';
+    } else {
+        panel.classList.add('open');
+        icon.textContent = '✕';
     }
 }
 
-// Toggle physics
-function togglePhysics(phase) {
-    physicsEnabled[phase] = !physicsEnabled[phase];
-    if (networks[phase]) {
-        networks[phase].setOptions({ physics: { enabled: physicsEnabled[phase] } });
-        const btn = document.getElementById(`${phase}-physics-btn`);
+// Fit view (use current phase)
+function fitView() {
+    if (networks[currentPhase]) {
+        networks[currentPhase].fit({ animation: true });
+    }
+}
+
+// Toggle physics (use current phase)
+function togglePhysics() {
+    physicsEnabled[currentPhase] = !physicsEnabled[currentPhase];
+    if (networks[currentPhase]) {
+        networks[currentPhase].setOptions({ physics: { enabled: physicsEnabled[currentPhase] } });
+        const btn = document.getElementById('physics-btn');
         if (btn) {
-            btn.style.opacity = physicsEnabled[phase] ? '1' : '0.5';
+            btn.style.opacity = physicsEnabled[currentPhase] ? '1' : '0.5';
         }
     }
 }
@@ -520,7 +519,6 @@ function clearPhaseData(phase) {
     if (confirm(`Clear all ${phase.toUpperCase()} data?`)) {
         cwaData[phase] = [];
         saveData();
-        updateDisplay(phase);
         updateNetwork(phase);
         updateDropdowns();
         if (networks.integrated) {
@@ -535,7 +533,6 @@ function clearAll() {
         if (confirm('Are you absolutely sure?')) {
             cwaData = { wda: [], conta: [], stra: [], soca: [], wca: [] };
             saveData();
-            updateAllDisplays();
             Object.keys(networks).forEach(phase => updateNetwork(phase));
             updateDropdowns();
         }
@@ -618,7 +615,6 @@ function importJSON() {
                 if (confirm('Import data? This will replace current data.')) {
                     cwaData = imported;
                     saveData();
-                    updateAllDisplays();
                     Object.keys(networks).forEach(phase => updateNetwork(phase));
                     updateDropdowns();
                     alert('Data imported successfully!');
