@@ -1,136 +1,228 @@
-# Cognitive Work Analysis App
+# Cognitive Work Analysis - Interactive Visualization Tool
 
-A comprehensive web-based tool for conducting Cognitive Work Analysis (CWA) on complex sociotechnical systems. This application supports all five phases of CWA and provides data management, quick entry, and network analysis export capabilities.
+A fully interactive web-based tool for conducting Cognitive Work Analysis (CWA) with real-time network visualizations. Build, explore, and export your CWA models visually.
 
-## Features
+## 🎯 Features
 
-- **Five CWA Phases**: Complete support for all phases of cognitive work analysis
-  - Work Domain Analysis (WDA)
-  - Control Task Analysis (ConTA)
-  - Strategies Analysis (StrA)
-  - Social Organization & Cooperation Analysis (SOCA)
-  - Worker Competencies Analysis (WCA)
+### Interactive Network Visualizations
+- **Real-time graph updates** - See your CWA model build as you add nodes
+- **Zoomable, pannable networks** - Navigate large models with ease
+- **Physics-based layouts** - Automatic node positioning with customizable physics
+- **Click-to-interact** - Click nodes to view details (expandable)
+- **Color-coded by type** - Instantly identify node types and relationships
 
-- **Quick Add Functionality**: Rapidly add nodes with essential information
-- **Detailed Data Entry**: Comprehensive forms for detailed analysis
-- **Inter-Phase Linking**: Connect data across different CWA phases
-- **Edge List Export**: Export relationships as CSV edge lists for network analysis
-- **Data Persistence**: Automatic saving to browser localStorage
-- **Import/Export**: Full data backup and restoration via JSON
+### All 5 CWA Phases with Live Graphs
 
-## Usage
+1. **Work Domain Analysis (WDA)**
+   - 5-level abstraction hierarchy
+   - Hierarchical tree visualization
+   - Functional Purpose → Values → Functions → Processes → Physical Objects
 
-### Getting Started
+2. **Control Task Analysis (ConTA)**
+   - Task network with goals, constraints, decisions, activities
+   - Link tasks to work domain nodes
+   - Flow-based visualization
+   - Toggle WDA links on/off
 
-1. Open `index.html` in a modern web browser
-2. Navigate between phases using the top navigation buttons
-3. Use "Quick Add" for rapid data entry or detailed forms for comprehensive analysis
+3. **Strategies Analysis (StrA)**
+   - Document procedures, heuristics, algorithms, improvisation
+   - Link strategies to tasks
+   - Strategy-task network view
 
-### Work Domain Analysis (WDA)
+4. **Social Organization (SOCA)**
+   - Map individuals, teams, departments, automation
+   - Actor-task assignment network
+   - Organizational structure visualization
 
-Define the work domain across five abstraction levels:
-- **Functional Purpose**: Overall objectives and goals
-- **Values & Priority Measures**: Criteria for success
-- **Purpose-Related Functions**: What the system does
-- **Object-Related Processes**: How components work
-- **Physical Objects**: Physical elements of the system
+5. **Worker Competencies (WCA)**
+   - Skill-based, rule-based, knowledge-based competencies
+   - Link to actors and strategies
+   - Competency network view
 
-Create hierarchical relationships by setting parent nodes.
+6. **Integrated System View**
+   - Complete CWA model in one visualization
+   - Filter by phase or relationship type
+   - See all connections across the entire system
 
-### Control Task Analysis (ConTA)
+### Data Management
+- **Quick add** - Rapid node entry with minimal fields
+- **Auto-save** - All data saved to browser localStorage
+- **Export to JSON** - Full data backup
+- **Export to CSV Edge List** - Network analysis ready (Gephi, Cytoscape, R, Python)
+- **Import data** - Load previous analyses
 
-Document what needs to be accomplished:
-- Define goals, constraints, decisions, and activities
-- Link tasks to work domain nodes
-- Establish task prerequisites
+### Interactive Controls
+- **Fit View** - Auto-zoom to fit all nodes
+- **Toggle Physics** - Enable/disable automatic layout
+- **Filter Views** - Show specific phases or relationships
+- **Responsive Design** - Works on desktop, tablet, and mobile
 
-### Strategies Analysis (StrA)
+## 🚀 Quick Start
 
-Capture how tasks can be performed:
-- Document procedures, heuristics, algorithms, and improvisation
-- Link strategies to specific tasks
-- Rate efficiency and flexibility
+### Run Locally
+1. Download all files
+2. Open `index.html` in any modern browser
+3. Start building your CWA model!
 
-### Social Organization (SOCA)
+### Deploy to GitHub Pages
+1. Push files to your GitHub repository
+2. Go to Settings → Pages
+3. Select branch: `claude/cognitive-work-analysis-app-Nqocv`
+4. Your app will be live at: `https://[username].github.io/[repo]/`
 
-Map actors and teams:
-- Define individuals, teams, departments, and automation
-- Assign tasks to actors
-- Document communication channels
+## 📊 How to Use
 
-### Worker Competencies (WCA)
+### Building Your CWA Model
 
-Identify required skills and knowledge:
-- Classify competencies as skill-based, rule-based, or knowledge-based
-- Link to strategies and actors
-- Document training requirements
+1. **Start with Work Domain (WDA)**
+   - Define your functional purpose at the top
+   - Add values, functions, processes, and physical objects
+   - Watch the hierarchy build in real-time
 
-## Exporting Data
+2. **Add Tasks (ConTA)**
+   - Define what needs to be accomplished
+   - Link tasks to work domain nodes
+   - See task networks form
 
-### Edge Lists (CSV)
+3. **Document Strategies (StrA)**
+   - Capture different ways to perform tasks
+   - Link to specific tasks
+   - Visualize strategy options
 
-Click "Export Edge Lists" to generate a CSV file containing all relationships:
-- WDA hierarchies
-- Task-to-domain mappings
-- Strategy-to-task connections
-- Actor-to-task assignments
-- Competency requirements
+4. **Map Actors (SOCA)**
+   - Add team members, automation, departments
+   - Will be able to assign tasks in future updates
 
-The edge list format is compatible with network analysis tools like Gephi, Cytoscape, and R's igraph.
+5. **Define Competencies (WCA)**
+   - Specify required skills and knowledge
+   - Link to actors
+   - Map training requirements
 
-**CSV Format:**
+6. **View Integrated System**
+   - See your complete CWA model
+   - Use filters to focus on specific relationships
+   - Export for further analysis
+
+### Visualization Controls
+
+- **🔍 Fit View** - Zoom to fit all nodes
+- **⚡ Physics** - Toggle automatic positioning
+- **🔗 Show Links** - Display cross-phase connections
+- **Filter Dropdown** - Show specific phases or relationships
+
+### Exporting Your Analysis
+
+**JSON Export** - Complete data structure
+```json
+{
+  "wda": [...],
+  "conta": [...],
+  "stra": [...],
+  "soca": [...],
+  "wca": [...]
+}
 ```
+
+**CSV Edge List** - Network analysis format
+```csv
 source,target,source_name,target_name,edge_type,phase
+id1,id2,"Task A","Domain Node B","task_to_domain","ConTA-WDA"
 ```
 
-### Complete Data (JSON)
+Compatible with:
+- Gephi (network visualization)
+- Cytoscape (biological networks, general network analysis)
+- R (igraph, tidygraph)
+- Python (NetworkX, graph-tool)
+- Neo4j (graph database)
 
-Click "Export All Data" to save all your CWA data in JSON format for backup or sharing.
+## 🎨 Interactive Features
 
-## Data Management
+- **Drag nodes** to rearrange
+- **Scroll to zoom** in/out
+- **Click+drag background** to pan
+- **Click nodes** to interact (details coming soon)
+- **Real-time updates** - graphs update instantly
+- **Smooth animations** - physics-based movement
+- **Responsive legends** - color-coded node types
 
-- **Import Data**: Load previously exported JSON files
-- **Clear All Data**: Reset the application (with confirmation)
-- **Auto-Save**: Data automatically saves to browser localStorage
+## 💾 Data Persistence
 
-## Browser Compatibility
+All data automatically saves to browser localStorage:
+- Survives browser refresh
+- Persists across sessions
+- Cleared only when you choose to clear or by clearing browser data
+
+**Backup your work!** Use Export JSON regularly.
+
+## 🌐 Browser Support
 
 - Chrome/Edge (recommended)
 - Firefox
 - Safari
-- Any modern browser with localStorage support
+- Any modern browser with:
+  - JavaScript ES6+
+  - localStorage
+  - Canvas support
 
-## GitHub Pages Deployment
+## 📱 Mobile Support
 
-This app is designed to run directly from GitHub Pages:
+Fully responsive design works on:
+- Desktop (best experience)
+- Tablets (full functionality)
+- Phones (optimized layout)
 
-1. Push these files to your repository
-2. Enable GitHub Pages in repository settings
-3. Select the branch containing these files
-4. Access your app at: `https://[username].github.io/[repository]/`
+Touch controls:
+- Pinch to zoom
+- Two-finger pan
+- Tap to select
 
-## Technical Details
+## 🔧 Technical Details
 
-- **Frontend**: Pure HTML, CSS, and JavaScript (no dependencies)
-- **Storage**: Browser localStorage
-- **Export Formats**: JSON, CSV
+- **Frontend**: Pure HTML, CSS, JavaScript
+- **Visualization**: vis.js network library
+- **Storage**: Browser localStorage API
+- **No server required** - runs entirely in browser
+- **No dependencies** - vis.js loaded from CDN
+- **File size**: ~100KB total
 
-## Tips
+## 📚 About Cognitive Work Analysis
 
-- Use Quick Add for rapid brainstorming sessions
-- Use detailed forms for comprehensive documentation
-- Regularly export your data for backup
-- Link nodes across phases to build a complete analysis
-- Export edge lists to visualize relationships in network analysis tools
+CWA is a framework developed by Jens Rasmussen for analyzing complex sociotechnical systems. It provides five complementary perspectives:
 
-## About Cognitive Work Analysis
+1. **Work Domain Analysis** - What exists in the environment
+2. **Control Task Analysis** - What needs to be done
+3. **Strategies Analysis** - How it can be done
+4. **Social Organization** - Who does it
+5. **Worker Competencies** - What skills are needed
 
-Cognitive Work Analysis is a framework developed by Jens Rasmussen and colleagues for understanding complex sociotechnical systems. It provides a structured approach to analyzing work domains, tasks, strategies, social structures, and competencies.
+This tool helps you build and visualize these analyses interactively.
 
-## License
+## 🎯 Use Cases
 
-This tool is provided as-is for research and educational purposes.
+- Healthcare system analysis
+- Industrial process design
+- Software system design
+- Transportation systems
+- Emergency response planning
+- Military operations
+- Air traffic control
+- Nuclear power plant operations
+- Any complex sociotechnical system
 
-## Contributing
+## 📖 Learn More
 
-Issues and pull requests welcome at the repository.
+- [Work Domain Analysis Handbook](https://www.routledge.com/Work-Domain-Analysis-Concepts-Guidelines-and-Cases/Vicente/p/book/9780805823974)
+- [Cognitive Work Analysis Book](https://www.routledge.com/Cognitive-Work-Analysis-Toward-Safe-Productive-and-Healthy-Computer-Based/Vicente/p/book/9780805823974)
+
+## 🤝 Contributing
+
+Issues, suggestions, and improvements welcome!
+
+## 📄 License
+
+Open source for research and educational use.
+
+---
+
+**Start analyzing your complex systems visually!** 🚀

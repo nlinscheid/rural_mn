@@ -1,6 +1,5 @@
-// Cognitive Work Analysis App - Main JavaScript
-
-// Data storage structure
+// CWA Interactive Visualization App
+// Data storage
 let cwaData = {
     wda: [],
     conta: [],
@@ -9,11 +8,56 @@ let cwaData = {
     wca: []
 };
 
-// Initialize app on load
+// Network instances
+let networks = {};
+let currentPhase = 'wda';
+let physicsEnabled = {
+    wda: true,
+    conta: true,
+    stra: true,
+    soca: true,
+    wca: true,
+    integrated: true
+};
+
+// Color schemes
+const colors = {
+    wda: {
+        purpose: '#9333ea',
+        values: '#4f46e5',
+        functions: '#0284c7',
+        processes: '#0d9488',
+        physical: '#059669'
+    },
+    conta: {
+        goal: '#ea580c',
+        constraint: '#dc2626',
+        decision: '#7c3aed',
+        activity: '#2563eb'
+    },
+    stra: {
+        procedure: '#059669',
+        heuristic: '#0891b2',
+        algorithm: '#7c3aed',
+        improvisation: '#d97706'
+    },
+    soca: {
+        individual: '#2563eb',
+        team: '#7c3aed',
+        department: '#0891b2',
+        automation: '#475569'
+    },
+    wca: {
+        skill: '#059669',
+        rule: '#d97706',
+        knowledge: '#dc2626'
+    }
+};
+
+// Initialize on load
 document.addEventListener('DOMContentLoaded', function() {
     loadData();
-    initializeNavigation();
-    initializeForms();
+    initializeNetworks();
     updateAllDisplays();
     updateStats();
 });
@@ -32,203 +76,105 @@ function saveData() {
     updateStats();
 }
 
-// Initialize phase navigation
-function initializeNavigation() {
-    const phaseButtons = document.querySelectorAll('.phase-btn');
-    phaseButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const phase = this.dataset.phase;
-            switchPhase(phase);
-        });
-    });
-}
-
-// Switch between phases
-function switchPhase(phase) {
-    // Update buttons
-    document.querySelectorAll('.phase-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelector(`[data-phase="${phase}"]`).classList.add('active');
-
-    // Update sections
-    document.querySelectorAll('.phase-section').forEach(section => {
-        section.classList.remove('active');
-    });
-    document.getElementById(phase).classList.add('active');
-
-    // Update dropdowns
-    updateDropdowns(phase);
-}
-
-// Initialize all forms
-function initializeForms() {
-    const phases = ['wda', 'conta', 'stra', 'soca', 'wca'];
-    phases.forEach(phase => {
-        const form = document.getElementById(`${phase}-form`);
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                addNode(phase, new FormData(this));
-                this.reset();
-            });
-        }
-    });
-}
-
 // Generate unique ID
 function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-// Quick add node function
-function quickAddNode(phase) {
-    const nameInput = document.getElementById(`${phase}-quick-name`);
-    const typeSelect = document.getElementById(`${phase}-quick-level`) ||
-                      document.getElementById(`${phase}-quick-type`);
-
+// Add node to phase
+function addNode(phase) {
+    const nameInput = document.getElementById(`${phase}-name`);
     const name = nameInput.value.trim();
+
     if (!name) {
         alert('Please enter a name');
         return;
     }
 
-    const formData = new FormData();
-    formData.append('name', name);
-
-    if (phase === 'wda') {
-        formData.append('level', typeSelect.value);
-    } else {
-        formData.append('type', typeSelect.value);
-    }
-
-    addNode(phase, formData);
-    nameInput.value = '';
-}
-
-// Add node to specific phase
-function addNode(phase, formData) {
     const node = {
         id: generateId(),
+        name: name,
         timestamp: new Date().toISOString()
     };
 
-    // Convert FormData to object
-    for (let [key, value] of formData.entries()) {
-        if (key === 'contaTasks') {
-            // Handle multi-select
-            const select = document.getElementById('soca-conta-link');
-            const selected = Array.from(select.selectedOptions).map(opt => opt.value);
-            node[key] = selected;
-        } else {
-            node[key] = value;
-        }
+    // Phase-specific properties
+    if (phase === 'wda') {
+        const levelSelect = document.getElementById('wda-level');
+        node.level = levelSelect.value;
+    } else if (phase === 'conta') {
+        const typeSelect = document.getElementById('conta-type');
+        const wdaLink = document.getElementById('conta-wda-link');
+        node.type = typeSelect.value;
+        if (wdaLink.value) node.wdaNode = wdaLink.value;
+    } else if (phase === 'stra') {
+        const typeSelect = document.getElementById('stra-type');
+        const taskLink = document.getElementById('stra-task-link');
+        node.type = typeSelect.value;
+        if (taskLink.value) node.contaTask = taskLink.value;
+    } else if (phase === 'soca') {
+        const typeSelect = document.getElementById('soca-type');
+        node.type = typeSelect.value;
+    } else if (phase === 'wca') {
+        const levelSelect = document.getElementById('wca-level');
+        const actorLink = document.getElementById('wca-actor-link');
+        node.level = levelSelect.value;
+        if (actorLink.value) node.socaActor = actorLink.value;
     }
 
     cwaData[phase].push(node);
+    nameInput.value = '';
+
     saveData();
     updateDisplay(phase);
+    updateNetwork(phase);
     updateDropdowns();
 
-    // Show success feedback
-    showNotification(`Added: ${node.name}`);
+    // Also update integrated view
+    if (networks.integrated) {
+        updateNetwork('integrated');
+    }
 }
 
-// Update display for a specific phase
+// Delete node
+function deleteNode(phase, id) {
+    const index = cwaData[phase].findIndex(n => n.id === id);
+    if (index > -1) {
+        if (confirm(`Delete "${cwaData[phase][index].name}"?`)) {
+            cwaData[phase].splice(index, 1);
+            saveData();
+            updateDisplay(phase);
+            updateNetwork(phase);
+            updateDropdowns();
+            if (networks.integrated) {
+                updateNetwork('integrated');
+            }
+        }
+    }
+}
+
+// Update node list display
 function updateDisplay(phase) {
-    const list = document.getElementById(`${phase}-list`);
-    const count = document.getElementById(`${phase}-count`);
+    const listEl = document.getElementById(`${phase}-nodes`);
+    if (!listEl) return;
 
-    if (!list) return;
+    listEl.innerHTML = '';
+    cwaData[phase].forEach(node => {
+        const div = document.createElement('div');
+        div.className = 'node-item';
 
-    list.innerHTML = '';
-    const nodes = cwaData[phase];
-    count.textContent = nodes.length;
+        const typeOrLevel = node.level || node.type || '';
+        const badge = typeOrLevel ? `<span class="badge" style="background:${colors[phase][typeOrLevel]}">${typeOrLevel}</span>` : '';
 
-    nodes.forEach((node, index) => {
-        const item = document.createElement('div');
-        item.className = 'node-item';
-        item.innerHTML = `
-            <div class="node-header">
+        div.innerHTML = `
+            <div class="node-item-header">
                 <strong>${node.name}</strong>
-                <span class="node-badge">${getBadgeText(phase, node)}</span>
+                ${badge}
             </div>
-            <div class="node-details">
-                ${node.description ? `<p>${node.description}</p>` : ''}
-                ${getNodeMetadata(phase, node)}
-            </div>
-            <div class="node-actions">
-                <button onclick="editNode('${phase}', ${index})" class="btn-edit">Edit</button>
-                <button onclick="deleteNode('${phase}', ${index})" class="btn-delete">Delete</button>
-            </div>
+            <button onclick="deleteNode('${phase}', '${node.id}')" class="delete-btn">×</button>
         `;
-        list.appendChild(item);
+
+        listEl.appendChild(div);
     });
-}
-
-// Get badge text for node type
-function getBadgeText(phase, node) {
-    switch(phase) {
-        case 'wda': return node.level || 'unknown';
-        case 'conta': return node.type || 'unknown';
-        case 'stra': return node.type || 'unknown';
-        case 'soca': return node.type || 'unknown';
-        case 'wca': return node.level || 'unknown';
-        default: return '';
-    }
-}
-
-// Get metadata display for node
-function getNodeMetadata(phase, node) {
-    let metadata = '';
-
-    switch(phase) {
-        case 'wda':
-            if (node.parent) {
-                const parentNode = cwaData.wda.find(n => n.id === node.parent);
-                metadata += `<small>Parent: ${parentNode ? parentNode.name : 'Unknown'}</small><br>`;
-            }
-            break;
-        case 'conta':
-            if (node.wdaNode) {
-                const wdaNode = cwaData.wda.find(n => n.id === node.wdaNode);
-                metadata += `<small>Related WDA: ${wdaNode ? wdaNode.name : 'Unknown'}</small><br>`;
-            }
-            if (node.prerequisites) {
-                metadata += `<small>Prerequisites: ${node.prerequisites}</small><br>`;
-            }
-            break;
-        case 'stra':
-            if (node.contaTask) {
-                const task = cwaData.conta.find(n => n.id === node.contaTask);
-                metadata += `<small>Task: ${task ? task.name : 'Unknown'}</small><br>`;
-            }
-            metadata += `<small>Efficiency: ${node.efficiency}/5 | Flexibility: ${node.flexibility}/5</small><br>`;
-            break;
-        case 'soca':
-            if (node.contaTasks && node.contaTasks.length > 0) {
-                metadata += `<small>Assigned Tasks: ${node.contaTasks.length}</small><br>`;
-            }
-            if (node.communication) {
-                metadata += `<small>Communication: ${node.communication}</small><br>`;
-            }
-            break;
-        case 'wca':
-            if (node.straStrategy) {
-                const strategy = cwaData.stra.find(n => n.id === node.straStrategy);
-                metadata += `<small>Strategy: ${strategy ? strategy.name : 'Unknown'}</small><br>`;
-            }
-            if (node.socaActor) {
-                const actor = cwaData.soca.find(n => n.id === node.socaActor);
-                metadata += `<small>Actor: ${actor ? actor.name : 'Unknown'}</small><br>`;
-            }
-            if (node.training) {
-                metadata += `<small>Training: ${node.training}</small><br>`;
-            }
-            break;
-    }
-
-    return metadata;
 }
 
 // Update all displays
@@ -238,24 +184,12 @@ function updateAllDisplays() {
     });
 }
 
-// Update dropdowns with current data
-function updateDropdowns(currentPhase = null) {
-    // Update WDA parent dropdown
-    const wdaParent = document.getElementById('wda-parent');
-    if (wdaParent) {
-        wdaParent.innerHTML = '<option value="">None</option>';
-        cwaData.wda.forEach(node => {
-            const option = document.createElement('option');
-            option.value = node.id;
-            option.textContent = `${node.name} (${node.level})`;
-            wdaParent.appendChild(option);
-        });
-    }
-
+// Update dropdowns
+function updateDropdowns() {
     // Update ConTA WDA link dropdown
     const contaWdaLink = document.getElementById('conta-wda-link');
     if (contaWdaLink) {
-        contaWdaLink.innerHTML = '<option value="">None</option>';
+        contaWdaLink.innerHTML = '<option value="">Link to WDA...</option>';
         cwaData.wda.forEach(node => {
             const option = document.createElement('option');
             option.value = node.id;
@@ -264,81 +198,352 @@ function updateDropdowns(currentPhase = null) {
         });
     }
 
-    // Update StrA ConTA link dropdown
-    const straContaLink = document.getElementById('stra-conta-link');
-    if (straContaLink) {
-        straContaLink.innerHTML = '<option value="">None</option>';
+    // Update StrA task link dropdown
+    const straTaskLink = document.getElementById('stra-task-link');
+    if (straTaskLink) {
+        straTaskLink.innerHTML = '<option value="">Link to Task...</option>';
         cwaData.conta.forEach(node => {
             const option = document.createElement('option');
             option.value = node.id;
             option.textContent = node.name;
-            straContaLink.appendChild(option);
+            straTaskLink.appendChild(option);
         });
     }
 
-    // Update SOCA ConTA link dropdown (multi-select)
-    const socaContaLink = document.getElementById('soca-conta-link');
-    if (socaContaLink) {
-        socaContaLink.innerHTML = '';
-        cwaData.conta.forEach(node => {
-            const option = document.createElement('option');
-            option.value = node.id;
-            option.textContent = node.name;
-            socaContaLink.appendChild(option);
-        });
-    }
-
-    // Update WCA StrA link dropdown
-    const wcaStratLink = document.getElementById('wca-stra-link');
-    if (wcaStratLink) {
-        wcaStratLink.innerHTML = '<option value="">None</option>';
-        cwaData.stra.forEach(node => {
-            const option = document.createElement('option');
-            option.value = node.id;
-            option.textContent = node.name;
-            wcaStratLink.appendChild(option);
-        });
-    }
-
-    // Update WCA SOCA link dropdown
-    const wcaSocaLink = document.getElementById('wca-soca-link');
-    if (wcaSocaLink) {
-        wcaSocaLink.innerHTML = '<option value="">None</option>';
+    // Update WCA actor link dropdown
+    const wcaActorLink = document.getElementById('wca-actor-link');
+    if (wcaActorLink) {
+        wcaActorLink.innerHTML = '<option value="">Link to Actor...</option>';
         cwaData.soca.forEach(node => {
             const option = document.createElement('option');
             option.value = node.id;
             option.textContent = node.name;
-            wcaSocaLink.appendChild(option);
+            wcaActorLink.appendChild(option);
         });
     }
 }
 
-// Edit node
-function editNode(phase, index) {
-    const node = cwaData[phase][index];
-    const newName = prompt('Edit name:', node.name);
+// Initialize all networks
+function initializeNetworks() {
+    initializeNetwork('wda');
+    initializeNetwork('conta');
+    initializeNetwork('stra');
+    initializeNetwork('soca');
+    initializeNetwork('wca');
+    initializeNetwork('integrated');
+}
 
-    if (newName && newName.trim()) {
-        cwaData[phase][index].name = newName.trim();
-        saveData();
-        updateDisplay(phase);
-        showNotification('Updated successfully');
+// Initialize a single network
+function initializeNetwork(phase) {
+    const container = document.getElementById(`${phase}-network`);
+    if (!container) return;
+
+    const options = {
+        nodes: {
+            shape: 'box',
+            margin: 10,
+            font: { size: 14, face: 'Inter, sans-serif' },
+            borderWidth: 2,
+            shadow: true
+        },
+        edges: {
+            arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+            smooth: { type: 'continuous' },
+            color: { color: '#cbd5e1', highlight: '#64748b' },
+            width: 2
+        },
+        physics: {
+            enabled: physicsEnabled[phase],
+            stabilization: { iterations: 200 },
+            barnesHut: {
+                gravitationalConstant: -8000,
+                springConstant: 0.04,
+                springLength: 150
+            }
+        },
+        interaction: {
+            hover: true,
+            tooltipDelay: 200,
+            zoomView: true,
+            dragView: true
+        },
+        layout: phase === 'wda' ? {
+            hierarchical: {
+                enabled: true,
+                direction: 'UD',
+                sortMethod: 'directed',
+                nodeSpacing: 150,
+                levelSeparation: 120
+            }
+        } : {}
+    };
+
+    const data = { nodes: [], edges: [] };
+    networks[phase] = new vis.Network(container, data, options);
+
+    // Add click handler
+    networks[phase].on('click', function(params) {
+        if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            showNodeDetails(phase, nodeId);
+        }
+    });
+
+    updateNetwork(phase);
+}
+
+// Update network visualization
+function updateNetwork(phase) {
+    if (!networks[phase]) return;
+
+    let nodes = [];
+    let edges = [];
+
+    if (phase === 'integrated') {
+        // Build integrated view
+        ({ nodes, edges } = buildIntegratedNetwork());
+    } else {
+        // Build phase-specific network
+        ({ nodes, edges } = buildPhaseNetwork(phase));
+    }
+
+    networks[phase].setData({ nodes: nodes, edges: edges });
+}
+
+// Build phase-specific network
+function buildPhaseNetwork(phase) {
+    const nodes = [];
+    const edges = [];
+
+    cwaData[phase].forEach(item => {
+        const typeOrLevel = item.level || item.type || '';
+        const color = colors[phase][typeOrLevel] || '#64748b';
+
+        nodes.push({
+            id: item.id,
+            label: item.name,
+            color: { background: color, border: color, highlight: { background: color, border: '#000' } },
+            font: { color: '#ffffff' }
+        });
+
+        // Add edges based on relationships
+        if (phase === 'conta' && item.wdaNode) {
+            // Link to WDA node
+            const wdaNode = cwaData.wda.find(n => n.id === item.wdaNode);
+            if (wdaNode) {
+                nodes.push({
+                    id: wdaNode.id,
+                    label: wdaNode.name,
+                    color: { background: colors.wda[wdaNode.level], border: colors.wda[wdaNode.level] },
+                    font: { color: '#ffffff' },
+                    shape: 'ellipse'
+                });
+                edges.push({ from: item.id, to: wdaNode.id, dashes: true });
+            }
+        }
+
+        if (phase === 'stra' && item.contaTask) {
+            // Link to task
+            const task = cwaData.conta.find(n => n.id === item.contaTask);
+            if (task) {
+                nodes.push({
+                    id: task.id,
+                    label: task.name,
+                    color: { background: colors.conta[task.type], border: colors.conta[task.type] },
+                    font: { color: '#ffffff' },
+                    shape: 'ellipse'
+                });
+                edges.push({ from: item.id, to: task.id });
+            }
+        }
+
+        if (phase === 'wca' && item.socaActor) {
+            // Link to actor
+            const actor = cwaData.soca.find(n => n.id === item.socaActor);
+            if (actor) {
+                nodes.push({
+                    id: actor.id,
+                    label: actor.name,
+                    color: { background: colors.soca[actor.type], border: colors.soca[actor.type] },
+                    font: { color: '#ffffff' },
+                    shape: 'ellipse'
+                });
+                edges.push({ from: item.id, to: actor.id });
+            }
+        }
+    });
+
+    return { nodes, edges };
+}
+
+// Build integrated network
+function buildIntegratedNetwork() {
+    const nodes = [];
+    const edges = [];
+    const addedNodes = new Set();
+
+    // Add all nodes from all phases
+    Object.keys(cwaData).forEach((phase, phaseIndex) => {
+        cwaData[phase].forEach(item => {
+            if (!addedNodes.has(item.id)) {
+                const typeOrLevel = item.level || item.type || '';
+                const phaseColors = {
+                    wda: '#9333ea',
+                    conta: '#2563eb',
+                    stra: '#059669',
+                    soca: '#d97706',
+                    wca: '#dc2626'
+                };
+
+                nodes.push({
+                    id: item.id,
+                    label: item.name,
+                    color: {
+                        background: colors[phase]?.[typeOrLevel] || phaseColors[phase],
+                        border: colors[phase]?.[typeOrLevel] || phaseColors[phase]
+                    },
+                    font: { color: '#ffffff' },
+                    group: phase
+                });
+                addedNodes.add(item.id);
+            }
+        });
+    });
+
+    // Add edges
+    cwaData.conta.forEach(task => {
+        if (task.wdaNode) {
+            edges.push({ from: task.id, to: task.wdaNode, color: { color: '#94a3b8' } });
+        }
+    });
+
+    cwaData.stra.forEach(strategy => {
+        if (strategy.contaTask) {
+            edges.push({ from: strategy.id, to: strategy.contaTask, color: { color: '#94a3b8' } });
+        }
+    });
+
+    cwaData.wca.forEach(competency => {
+        if (competency.socaActor) {
+            edges.push({ from: competency.id, to: competency.socaActor, color: { color: '#94a3b8' } });
+        }
+    });
+
+    return { nodes, edges };
+}
+
+// Show node details (for future expansion)
+function showNodeDetails(phase, nodeId) {
+    // For now, just log
+    console.log('Clicked node:', phase, nodeId);
+}
+
+// Switch phase
+function switchPhase(phase) {
+    currentPhase = phase;
+
+    // Update tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-phase="${phase}"]`).classList.add('active');
+
+    // Update sections
+    document.querySelectorAll('.phase-content').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById(`${phase}-phase`).classList.add('active');
+
+    // Update network if needed
+    if (networks[phase]) {
+        setTimeout(() => networks[phase].fit(), 100);
     }
 }
 
-// Delete node
-function deleteNode(phase, index) {
-    const node = cwaData[phase][index];
-    if (confirm(`Delete "${node.name}"?`)) {
-        cwaData[phase].splice(index, 1);
-        saveData();
-        updateDisplay(phase);
-        showNotification('Deleted successfully');
+// Fit view
+function fitView(phase) {
+    if (networks[phase]) {
+        networks[phase].fit({ animation: true });
     }
 }
 
-// Export all data as JSON
-function exportAllData() {
+// Toggle physics
+function togglePhysics(phase) {
+    physicsEnabled[phase] = !physicsEnabled[phase];
+    if (networks[phase]) {
+        networks[phase].setOptions({ physics: { enabled: physicsEnabled[phase] } });
+        const btn = document.getElementById(`${phase}-physics-btn`);
+        if (btn) {
+            btn.style.opacity = physicsEnabled[phase] ? '1' : '0.5';
+        }
+    }
+}
+
+// Filter integrated view
+function filterIntegrated(filter) {
+    if (!networks.integrated) return;
+
+    const { nodes, edges } = buildIntegratedNetwork();
+
+    if (filter === 'all') {
+        networks.integrated.setData({ nodes, edges });
+    } else if (filter.includes('-')) {
+        // Show connections between two phases
+        const [phase1, phase2] = filter.split('-');
+        const filteredNodes = nodes.filter(n => n.group === phase1 || n.group === phase2);
+        const filteredNodeIds = new Set(filteredNodes.map(n => n.id));
+        const filteredEdges = edges.filter(e => filteredNodeIds.has(e.from) && filteredNodeIds.has(e.to));
+        networks.integrated.setData({ nodes: filteredNodes, edges: filteredEdges });
+    } else {
+        // Show single phase
+        const filteredNodes = nodes.filter(n => n.group === filter);
+        networks.integrated.setData({ nodes: filteredNodes, edges: [] });
+    }
+
+    setTimeout(() => networks.integrated.fit(), 100);
+}
+
+// Update stats
+function updateStats() {
+    ['wda', 'conta', 'stra', 'soca', 'wca'].forEach(phase => {
+        const el = document.getElementById(`stat-${phase}`);
+        if (el) el.textContent = cwaData[phase].length;
+    });
+
+    const total = Object.values(cwaData).reduce((sum, arr) => sum + arr.length, 0);
+    const totalEl = document.getElementById('stat-total');
+    if (totalEl) totalEl.textContent = total;
+}
+
+// Clear phase data
+function clearPhaseData(phase) {
+    if (confirm(`Clear all ${phase.toUpperCase()} data?`)) {
+        cwaData[phase] = [];
+        saveData();
+        updateDisplay(phase);
+        updateNetwork(phase);
+        updateDropdowns();
+        if (networks.integrated) {
+            updateNetwork('integrated');
+        }
+    }
+}
+
+// Clear all data
+function clearAll() {
+    if (confirm('Delete ALL data? This cannot be undone!')) {
+        if (confirm('Are you absolutely sure?')) {
+            cwaData = { wda: [], conta: [], stra: [], soca: [], wca: [] };
+            saveData();
+            updateAllDisplays();
+            Object.keys(networks).forEach(phase => updateNetwork(phase));
+            updateDropdowns();
+        }
+    }
+}
+
+// Export JSON
+function exportJSON() {
     const dataStr = JSON.stringify(cwaData, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -347,142 +552,62 @@ function exportAllData() {
     a.download = `cwa-data-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showNotification('Data exported successfully');
 }
 
-// Export edge lists as CSV
-function exportEdgeLists() {
+// Export CSV edge list
+function exportCSV() {
     const edges = [];
 
-    // WDA hierarchical edges
+    // WDA hierarchies
     cwaData.wda.forEach(node => {
         if (node.parent) {
-            edges.push({
-                source: node.parent,
-                target: node.id,
-                source_name: cwaData.wda.find(n => n.id === node.parent)?.name || '',
-                target_name: node.name,
-                edge_type: 'wda_hierarchy',
-                phase: 'WDA'
-            });
+            const parent = cwaData.wda.find(n => n.id === node.parent);
+            edges.push([node.id, node.parent, node.name, parent?.name || '', 'wda_hierarchy', 'WDA']);
         }
     });
 
-    // ConTA to WDA edges
-    cwaData.conta.forEach(node => {
-        if (node.wdaNode) {
-            edges.push({
-                source: node.id,
-                target: node.wdaNode,
-                source_name: node.name,
-                target_name: cwaData.wda.find(n => n.id === node.wdaNode)?.name || '',
-                edge_type: 'task_to_domain',
-                phase: 'ConTA-WDA'
-            });
-        }
-
-        // Task prerequisites
-        if (node.prerequisites) {
-            const prereqs = node.prerequisites.split(',').map(p => p.trim());
-            prereqs.forEach(prereqId => {
-                edges.push({
-                    source: prereqId,
-                    target: node.id,
-                    source_name: prereqId,
-                    target_name: node.name,
-                    edge_type: 'prerequisite',
-                    phase: 'ConTA'
-                });
-            });
+    // ConTA-WDA links
+    cwaData.conta.forEach(task => {
+        if (task.wdaNode) {
+            const wdaNode = cwaData.wda.find(n => n.id === task.wdaNode);
+            edges.push([task.id, task.wdaNode, task.name, wdaNode?.name || '', 'task_to_domain', 'ConTA-WDA']);
         }
     });
 
-    // StrA to ConTA edges
-    cwaData.stra.forEach(node => {
-        if (node.contaTask) {
-            edges.push({
-                source: node.id,
-                target: node.contaTask,
-                source_name: node.name,
-                target_name: cwaData.conta.find(n => n.id === node.contaTask)?.name || '',
-                edge_type: 'strategy_for_task',
-                phase: 'StrA-ConTA'
-            });
+    // StrA-ConTA links
+    cwaData.stra.forEach(strategy => {
+        if (strategy.contaTask) {
+            const task = cwaData.conta.find(n => n.id === strategy.contaTask);
+            edges.push([strategy.id, strategy.contaTask, strategy.name, task?.name || '', 'strategy_for_task', 'StrA-ConTA']);
         }
     });
 
-    // SOCA to ConTA edges
-    cwaData.soca.forEach(node => {
-        if (node.contaTasks && Array.isArray(node.contaTasks)) {
-            node.contaTasks.forEach(taskId => {
-                if (taskId) {
-                    edges.push({
-                        source: node.id,
-                        target: taskId,
-                        source_name: node.name,
-                        target_name: cwaData.conta.find(n => n.id === taskId)?.name || '',
-                        edge_type: 'actor_performs_task',
-                        phase: 'SOCA-ConTA'
-                    });
-                }
-            });
+    // WCA-SOCA links
+    cwaData.wca.forEach(competency => {
+        if (competency.socaActor) {
+            const actor = cwaData.soca.find(n => n.id === competency.socaActor);
+            edges.push([competency.id, competency.socaActor, competency.name, actor?.name || '', 'competency_for_actor', 'WCA-SOCA']);
         }
     });
 
-    // WCA to StrA edges
-    cwaData.wca.forEach(node => {
-        if (node.straStrategy) {
-            edges.push({
-                source: node.id,
-                target: node.straStrategy,
-                source_name: node.name,
-                target_name: cwaData.stra.find(n => n.id === node.straStrategy)?.name || '',
-                edge_type: 'competency_for_strategy',
-                phase: 'WCA-StrA'
-            });
-        }
-
-        // WCA to SOCA edges
-        if (node.socaActor) {
-            edges.push({
-                source: node.id,
-                target: node.socaActor,
-                source_name: node.name,
-                target_name: cwaData.soca.find(n => n.id === node.socaActor)?.name || '',
-                edge_type: 'competency_for_actor',
-                phase: 'WCA-SOCA'
-            });
-        }
-    });
-
-    // Convert to CSV
     const csv = [
         ['source', 'target', 'source_name', 'target_name', 'edge_type', 'phase'].join(','),
-        ...edges.map(e => [
-            e.source,
-            e.target,
-            `"${e.source_name}"`,
-            `"${e.target_name}"`,
-            e.edge_type,
-            e.phase
-        ].join(','))
+        ...edges.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `cwa-edge-list-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `cwa-edgelist-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-
-    showNotification(`Exported ${edges.length} edges to CSV`);
 }
 
-// Import data
-function importData() {
-    const fileInput = document.getElementById('file-input');
-    fileInput.onchange = function(e) {
+// Import JSON
+function importJSON() {
+    const input = document.getElementById('file-input');
+    input.onchange = function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -490,13 +615,13 @@ function importData() {
         reader.onload = function(event) {
             try {
                 const imported = JSON.parse(event.target.result);
-
-                if (confirm('This will replace all current data. Continue?')) {
+                if (confirm('Import data? This will replace current data.')) {
                     cwaData = imported;
                     saveData();
                     updateAllDisplays();
+                    Object.keys(networks).forEach(phase => updateNetwork(phase));
                     updateDropdowns();
-                    showNotification('Data imported successfully');
+                    alert('Data imported successfully!');
                 }
             } catch (error) {
                 alert('Error importing data: ' + error.message);
@@ -504,73 +629,16 @@ function importData() {
         };
         reader.readAsText(file);
     };
-    fileInput.click();
+    input.click();
 }
 
-// Clear all data
-function clearAllData() {
-    if (confirm('This will delete ALL data permanently. Are you sure?')) {
-        if (confirm('Really delete everything? This cannot be undone!')) {
-            cwaData = {
-                wda: [],
-                conta: [],
-                stra: [],
-                soca: [],
-                wca: []
-            };
-            saveData();
-            updateAllDisplays();
-            updateDropdowns();
-            showNotification('All data cleared');
-        }
+// Toggle WDA links in ConTA view
+let showingWdaLinks = false;
+function toggleWdaLinks() {
+    showingWdaLinks = !showingWdaLinks;
+    const btn = document.getElementById('wda-links-btn');
+    if (btn) {
+        btn.style.opacity = showingWdaLinks ? '1' : '0.5';
     }
-}
-
-// Update statistics
-function updateStats() {
-    const totalNodes = Object.values(cwaData).reduce((sum, phase) => sum + phase.length, 0);
-    document.getElementById('total-nodes').textContent = totalNodes;
-
-    // Count connections
-    let connections = 0;
-
-    // Count WDA hierarchies
-    connections += cwaData.wda.filter(n => n.parent).length;
-
-    // Count ConTA-WDA links
-    connections += cwaData.conta.filter(n => n.wdaNode).length;
-
-    // Count StrA-ConTA links
-    connections += cwaData.stra.filter(n => n.contaTask).length;
-
-    // Count SOCA-ConTA links
-    cwaData.soca.forEach(n => {
-        if (n.contaTasks && Array.isArray(n.contaTasks)) {
-            connections += n.contaTasks.filter(t => t).length;
-        }
-    });
-
-    // Count WCA-StrA and WCA-SOCA links
-    connections += cwaData.wca.filter(n => n.straStrategy).length;
-    connections += cwaData.wca.filter(n => n.socaActor).length;
-
-    document.getElementById('total-connections').textContent = connections;
-}
-
-// Show notification
-function showNotification(message) {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = 'notification';
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    // Trigger animation
-    setTimeout(() => notification.classList.add('show'), 10);
-
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    updateNetwork('conta');
 }

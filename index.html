@@ -3,275 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognitive Work Analysis App</title>
+    <title>CWA Interactive Tool</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.6/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div class="app-container">
         <header>
-            <h1>Cognitive Work Analysis Tool</h1>
-            <p class="subtitle">Systematic framework for analyzing complex sociotechnical systems</p>
+            <h1>🧠 Cognitive Work Analysis</h1>
+            <p>Interactive Visualization & Analysis Tool</p>
         </header>
 
-        <nav class="phase-nav">
-            <button class="phase-btn active" data-phase="wda">Work Domain Analysis</button>
-            <button class="phase-btn" data-phase="conta">Control Task Analysis</button>
-            <button class="phase-btn" data-phase="stra">Strategies Analysis</button>
-            <button class="phase-btn" data-phase="soca">Social Organization</button>
-            <button class="phase-btn" data-phase="wca">Worker Competencies</button>
+        <nav class="phase-tabs">
+            <button class="tab-btn active" data-phase="wda" onclick="switchPhase('wda')">
+                <div class="tab-icon">🏗️</div>
+                <div class="tab-label">Work Domain</div>
+            </button>
+            <button class="tab-btn" data-phase="conta" onclick="switchPhase('conta')">
+                <div class="tab-icon">📋</div>
+                <div class="tab-label">Tasks</div>
+            </button>
+            <button class="tab-btn" data-phase="stra" onclick="switchPhase('stra')">
+                <div class="tab-icon">🎯</div>
+                <div class="tab-label">Strategies</div>
+            </button>
+            <button class="tab-btn" data-phase="soca" onclick="switchPhase('soca')">
+                <div class="tab-icon">👥</div>
+                <div class="tab-label">Actors</div>
+            </button>
+            <button class="tab-btn" data-phase="wca" onclick="switchPhase('wca')">
+                <div class="tab-icon">🎓</div>
+                <div class="tab-label">Competencies</div>
+            </button>
+            <button class="tab-btn" data-phase="integrated" onclick="switchPhase('integrated')">
+                <div class="tab-icon">🌐</div>
+                <div class="tab-label">Full System</div>
+            </button>
         </nav>
 
-        <main>
-            <!-- Work Domain Analysis Phase -->
-            <section id="wda" class="phase-section active">
-                <h2>Work Domain Analysis (WDA)</h2>
-                <p class="phase-description">Define the functional purpose, values, functions, processes, and physical objects of the work domain.</p>
+        <!-- WDA Phase -->
+        <section id="wda-phase" class="phase-content active">
+            <div class="phase-layout">
+                <aside class="sidebar">
+                    <h2>Work Domain Analysis</h2>
+                    <p class="description">Build your abstraction hierarchy</p>
 
-                <div class="quick-add">
-                    <h3>Quick Add Node</h3>
-                    <input type="text" id="wda-quick-name" placeholder="Node name">
-                    <select id="wda-quick-level">
-                        <option value="functional-purpose">Functional Purpose</option>
-                        <option value="values">Values & Priority Measures</option>
-                        <option value="functions">Purpose-Related Functions</option>
-                        <option value="processes">Object-Related Processes</option>
-                        <option value="physical">Physical Objects</option>
-                    </select>
-                    <button onclick="quickAddNode('wda')">+ Quick Add</button>
-                </div>
+                    <div class="quick-entry">
+                        <input type="text" id="wda-name" placeholder="Node name" />
+                        <select id="wda-level">
+                            <option value="purpose">Functional Purpose</option>
+                            <option value="values">Values & Priorities</option>
+                            <option value="functions">Functions</option>
+                            <option value="processes">Processes</option>
+                            <option value="physical">Physical Objects</option>
+                        </select>
+                        <button onclick="addNode('wda')" class="add-btn">+ Add Node</button>
+                    </div>
 
-                <div class="data-entry">
-                    <h3>Add Detailed Node</h3>
-                    <form id="wda-form">
-                        <label>Node Name: <input type="text" name="name" required></label>
-                        <label>Abstraction Level:
-                            <select name="level">
-                                <option value="functional-purpose">Functional Purpose</option>
-                                <option value="values">Values & Priority Measures</option>
-                                <option value="functions">Purpose-Related Functions</option>
-                                <option value="processes">Object-Related Processes</option>
-                                <option value="physical">Physical Objects</option>
+                    <div class="node-list" id="wda-nodes"></div>
+
+                    <div class="controls">
+                        <button onclick="clearPhaseData('wda')">Clear WDA</button>
+                    </div>
+                </aside>
+
+                <main class="visualization">
+                    <div class="viz-header">
+                        <h3>Abstraction Hierarchy Visualization</h3>
+                        <div class="viz-controls">
+                            <button onclick="fitView('wda')" title="Fit to screen">🔍</button>
+                            <button onclick="togglePhysics('wda')" title="Toggle physics" id="wda-physics-btn">⚡</button>
+                        </div>
+                    </div>
+                    <div id="wda-network" class="network-viz"></div>
+                    <div class="viz-legend">
+                        <span><i style="background:#9333ea"></i>Purpose</span>
+                        <span><i style="background:#4f46e5"></i>Values</span>
+                        <span><i style="background:#0284c7"></i>Functions</span>
+                        <span><i style="background:#0d9488"></i>Processes</span>
+                        <span><i style="background:#059669"></i>Physical</span>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- ConTA Phase -->
+        <section id="conta-phase" class="phase-content">
+            <div class="phase-layout">
+                <aside class="sidebar">
+                    <h2>Control Task Analysis</h2>
+                    <p class="description">Map your task network</p>
+
+                    <div class="quick-entry">
+                        <input type="text" id="conta-name" placeholder="Task name" />
+                        <select id="conta-type">
+                            <option value="goal">Goal</option>
+                            <option value="constraint">Constraint</option>
+                            <option value="decision">Decision</option>
+                            <option value="activity">Activity</option>
+                        </select>
+                        <select id="conta-wda-link">
+                            <option value="">Link to WDA...</option>
+                        </select>
+                        <button onclick="addNode('conta')" class="add-btn">+ Add Task</button>
+                    </div>
+
+                    <div class="node-list" id="conta-nodes"></div>
+
+                    <div class="controls">
+                        <button onclick="clearPhaseData('conta')">Clear Tasks</button>
+                    </div>
+                </aside>
+
+                <main class="visualization">
+                    <div class="viz-header">
+                        <h3>Task Network</h3>
+                        <div class="viz-controls">
+                            <button onclick="fitView('conta')" title="Fit to screen">🔍</button>
+                            <button onclick="togglePhysics('conta')" title="Toggle physics" id="conta-physics-btn">⚡</button>
+                            <button onclick="toggleWdaLinks()" title="Show/Hide WDA links" id="wda-links-btn">🔗 WDA</button>
+                        </div>
+                    </div>
+                    <div id="conta-network" class="network-viz"></div>
+                    <div class="viz-legend">
+                        <span><i style="background:#ea580c"></i>Goal</span>
+                        <span><i style="background:#dc2626"></i>Constraint</span>
+                        <span><i style="background:#7c3aed"></i>Decision</span>
+                        <span><i style="background:#2563eb"></i>Activity</span>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- StrA Phase -->
+        <section id="stra-phase" class="phase-content">
+            <div class="phase-layout">
+                <aside class="sidebar">
+                    <h2>Strategies Analysis</h2>
+                    <p class="description">Document how tasks are performed</p>
+
+                    <div class="quick-entry">
+                        <input type="text" id="stra-name" placeholder="Strategy name" />
+                        <select id="stra-type">
+                            <option value="procedure">Procedure</option>
+                            <option value="heuristic">Heuristic</option>
+                            <option value="algorithm">Algorithm</option>
+                            <option value="improvisation">Improvisation</option>
+                        </select>
+                        <select id="stra-task-link">
+                            <option value="">Link to Task...</option>
+                        </select>
+                        <button onclick="addNode('stra')" class="add-btn">+ Add Strategy</button>
+                    </div>
+
+                    <div class="node-list" id="stra-nodes"></div>
+
+                    <div class="controls">
+                        <button onclick="clearPhaseData('stra')">Clear Strategies</button>
+                    </div>
+                </aside>
+
+                <main class="visualization">
+                    <div class="viz-header">
+                        <h3>Strategy-Task Network</h3>
+                        <div class="viz-controls">
+                            <button onclick="fitView('stra')" title="Fit to screen">🔍</button>
+                            <button onclick="togglePhysics('stra')" title="Toggle physics" id="stra-physics-btn">⚡</button>
+                        </div>
+                    </div>
+                    <div id="stra-network" class="network-viz"></div>
+                    <div class="viz-legend">
+                        <span><i style="background:#059669"></i>Procedure</span>
+                        <span><i style="background:#0891b2"></i>Heuristic</span>
+                        <span><i style="background:#7c3aed"></i>Algorithm</span>
+                        <span><i style="background:#d97706"></i>Improvisation</span>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- SOCA Phase -->
+        <section id="soca-phase" class="phase-content">
+            <div class="phase-layout">
+                <aside class="sidebar">
+                    <h2>Social Organization</h2>
+                    <p class="description">Map actors and task assignments</p>
+
+                    <div class="quick-entry">
+                        <input type="text" id="soca-name" placeholder="Actor/Team name" />
+                        <select id="soca-type">
+                            <option value="individual">Individual</option>
+                            <option value="team">Team</option>
+                            <option value="department">Department</option>
+                            <option value="automation">Automation</option>
+                        </select>
+                        <button onclick="addNode('soca')" class="add-btn">+ Add Actor</button>
+                    </div>
+
+                    <div class="node-list" id="soca-nodes"></div>
+
+                    <div class="controls">
+                        <button onclick="clearPhaseData('soca')">Clear Actors</button>
+                    </div>
+                </aside>
+
+                <main class="visualization">
+                    <div class="viz-header">
+                        <h3>Actor-Task Network</h3>
+                        <div class="viz-controls">
+                            <button onclick="fitView('soca')" title="Fit to screen">🔍</button>
+                            <button onclick="togglePhysics('soca')" title="Toggle physics" id="soca-physics-btn">⚡</button>
+                        </div>
+                    </div>
+                    <div id="soca-network" class="network-viz"></div>
+                    <div class="viz-legend">
+                        <span><i style="background:#2563eb"></i>Individual</span>
+                        <span><i style="background:#7c3aed"></i>Team</span>
+                        <span><i style="background:#0891b2"></i>Department</span>
+                        <span><i style="background:#475569"></i>Automation</span>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- WCA Phase -->
+        <section id="wca-phase" class="phase-content">
+            <div class="phase-layout">
+                <aside class="sidebar">
+                    <h2>Worker Competencies</h2>
+                    <p class="description">Define required skills and knowledge</p>
+
+                    <div class="quick-entry">
+                        <input type="text" id="wca-name" placeholder="Competency name" />
+                        <select id="wca-level">
+                            <option value="skill">Skill-Based</option>
+                            <option value="rule">Rule-Based</option>
+                            <option value="knowledge">Knowledge-Based</option>
+                        </select>
+                        <select id="wca-actor-link">
+                            <option value="">Link to Actor...</option>
+                        </select>
+                        <button onclick="addNode('wca')" class="add-btn">+ Add Competency</button>
+                    </div>
+
+                    <div class="node-list" id="wca-nodes"></div>
+
+                    <div class="controls">
+                        <button onclick="clearPhaseData('wca')">Clear Competencies</button>
+                    </div>
+                </aside>
+
+                <main class="visualization">
+                    <div class="viz-header">
+                        <h3>Competency Network</h3>
+                        <div class="viz-controls">
+                            <button onclick="fitView('wca')" title="Fit to screen">🔍</button>
+                            <button onclick="togglePhysics('wca')" title="Toggle physics" id="wca-physics-btn">⚡</button>
+                        </div>
+                    </div>
+                    <div id="wca-network" class="network-viz"></div>
+                    <div class="viz-legend">
+                        <span><i style="background:#059669"></i>Skill-Based</span>
+                        <span><i style="background:#d97706"></i>Rule-Based</span>
+                        <span><i style="background:#dc2626"></i>Knowledge-Based</span>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- Integrated View -->
+        <section id="integrated-phase" class="phase-content">
+            <div class="phase-layout full">
+                <main class="visualization-full">
+                    <div class="viz-header">
+                        <h3>Complete System Network</h3>
+                        <div class="viz-controls">
+                            <button onclick="fitView('integrated')" title="Fit to screen">🔍</button>
+                            <button onclick="togglePhysics('integrated')" title="Toggle physics" id="integrated-physics-btn">⚡</button>
+                            <select id="filter-select" onchange="filterIntegrated(this.value)">
+                                <option value="all">Show All Phases</option>
+                                <option value="wda">WDA Only</option>
+                                <option value="conta">Tasks Only</option>
+                                <option value="stra">Strategies Only</option>
+                                <option value="soca">Actors Only</option>
+                                <option value="wca">Competencies Only</option>
+                                <option value="wda-conta">WDA ↔ Tasks</option>
+                                <option value="conta-stra">Tasks ↔ Strategies</option>
                             </select>
-                        </label>
-                        <label>Description: <textarea name="description" rows="3"></textarea></label>
-                        <label>Parent Node:
-                            <select name="parent" id="wda-parent">
-                                <option value="">None</option>
-                            </select>
-                        </label>
-                        <button type="submit">Add Node</button>
-                    </form>
-                </div>
-
-                <div class="data-display">
-                    <h3>WDA Nodes <span class="count" id="wda-count">0</span></h3>
-                    <div id="wda-list" class="node-list"></div>
-                </div>
-            </section>
-
-            <!-- Control Task Analysis Phase -->
-            <section id="conta" class="phase-section">
-                <h2>Control Task Analysis (ConTA)</h2>
-                <p class="phase-description">Identify what needs to be done, independent of who does it or how it's done.</p>
-
-                <div class="quick-add">
-                    <h3>Quick Add Task</h3>
-                    <input type="text" id="conta-quick-name" placeholder="Task name">
-                    <select id="conta-quick-type">
-                        <option value="goal">Goal</option>
-                        <option value="constraint">Constraint</option>
-                        <option value="decision">Decision</option>
-                        <option value="activity">Activity</option>
-                    </select>
-                    <button onclick="quickAddNode('conta')">+ Quick Add</button>
-                </div>
-
-                <div class="data-entry">
-                    <h3>Add Detailed Task</h3>
-                    <form id="conta-form">
-                        <label>Task Name: <input type="text" name="name" required></label>
-                        <label>Task Type:
-                            <select name="type">
-                                <option value="goal">Goal</option>
-                                <option value="constraint">Constraint</option>
-                                <option value="decision">Decision</option>
-                                <option value="activity">Activity</option>
-                            </select>
-                        </label>
-                        <label>Description: <textarea name="description" rows="3"></textarea></label>
-                        <label>Related WDA Node:
-                            <select name="wdaNode" id="conta-wda-link">
-                                <option value="">None</option>
-                            </select>
-                        </label>
-                        <label>Prerequisites: <input type="text" name="prerequisites" placeholder="Comma-separated task IDs"></label>
-                        <button type="submit">Add Task</button>
-                    </form>
-                </div>
-
-                <div class="data-display">
-                    <h3>ConTA Tasks <span class="count" id="conta-count">0</span></h3>
-                    <div id="conta-list" class="node-list"></div>
-                </div>
-            </section>
-
-            <!-- Strategies Analysis Phase -->
-            <section id="stra" class="phase-section">
-                <h2>Strategies Analysis (StrA)</h2>
-                <p class="phase-description">Document the different ways tasks can be accomplished.</p>
-
-                <div class="quick-add">
-                    <h3>Quick Add Strategy</h3>
-                    <input type="text" id="stra-quick-name" placeholder="Strategy name">
-                    <select id="stra-quick-type">
-                        <option value="procedure">Procedure</option>
-                        <option value="heuristic">Heuristic</option>
-                        <option value="algorithm">Algorithm</option>
-                        <option value="improvisation">Improvisation</option>
-                    </select>
-                    <button onclick="quickAddNode('stra')">+ Quick Add</button>
-                </div>
-
-                <div class="data-entry">
-                    <h3>Add Detailed Strategy</h3>
-                    <form id="stra-form">
-                        <label>Strategy Name: <input type="text" name="name" required></label>
-                        <label>Strategy Type:
-                            <select name="type">
-                                <option value="procedure">Procedure</option>
-                                <option value="heuristic">Heuristic</option>
-                                <option value="algorithm">Algorithm</option>
-                                <option value="improvisation">Improvisation</option>
-                            </select>
-                        </label>
-                        <label>Description: <textarea name="description" rows="3"></textarea></label>
-                        <label>Related Task:
-                            <select name="contaTask" id="stra-conta-link">
-                                <option value="">None</option>
-                            </select>
-                        </label>
-                        <label>Efficiency (1-5): <input type="number" name="efficiency" min="1" max="5" value="3"></label>
-                        <label>Flexibility (1-5): <input type="number" name="flexibility" min="1" max="5" value="3"></label>
-                        <button type="submit">Add Strategy</button>
-                    </form>
-                </div>
-
-                <div class="data-display">
-                    <h3>StrA Strategies <span class="count" id="stra-count">0</span></h3>
-                    <div id="stra-list" class="node-list"></div>
-                </div>
-            </section>
-
-            <!-- Social Organization & Cooperation Analysis Phase -->
-            <section id="soca" class="phase-section">
-                <h2>Social Organization & Cooperation Analysis (SOCA)</h2>
-                <p class="phase-description">Analyze how work is distributed among actors and how they cooperate.</p>
-
-                <div class="quick-add">
-                    <h3>Quick Add Actor/Team</h3>
-                    <input type="text" id="soca-quick-name" placeholder="Actor/Team name">
-                    <select id="soca-quick-type">
-                        <option value="individual">Individual</option>
-                        <option value="team">Team</option>
-                        <option value="department">Department</option>
-                        <option value="automation">Automation</option>
-                    </select>
-                    <button onclick="quickAddNode('soca')">+ Quick Add</button>
-                </div>
-
-                <div class="data-entry">
-                    <h3>Add Detailed Actor/Team</h3>
-                    <form id="soca-form">
-                        <label>Actor/Team Name: <input type="text" name="name" required></label>
-                        <label>Type:
-                            <select name="type">
-                                <option value="individual">Individual</option>
-                                <option value="team">Team</option>
-                                <option value="department">Department</option>
-                                <option value="automation">Automation</option>
-                            </select>
-                        </label>
-                        <label>Description: <textarea name="description" rows="3"></textarea></label>
-                        <label>Assigned Tasks:
-                            <select name="contaTasks" id="soca-conta-link" multiple>
-                            </select>
-                        </label>
-                        <label>Communication Channels: <input type="text" name="communication" placeholder="e.g., Radio, Email, Face-to-face"></label>
-                        <button type="submit">Add Actor/Team</button>
-                    </form>
-                </div>
-
-                <div class="data-display">
-                    <h3>SOCA Actors/Teams <span class="count" id="soca-count">0</span></h3>
-                    <div id="soca-list" class="node-list"></div>
-                </div>
-            </section>
-
-            <!-- Worker Competencies Analysis Phase -->
-            <section id="wca" class="phase-section">
-                <h2>Worker Competencies Analysis (WCA)</h2>
-                <p class="phase-description">Define the cognitive skills and knowledge required for effective performance.</p>
-
-                <div class="quick-add">
-                    <h3>Quick Add Competency</h3>
-                    <input type="text" id="wca-quick-name" placeholder="Competency name">
-                    <select id="wca-quick-type">
-                        <option value="skill">Skill-Based</option>
-                        <option value="rule">Rule-Based</option>
-                        <option value="knowledge">Knowledge-Based</option>
-                    </select>
-                    <button onclick="quickAddNode('wca')">+ Quick Add</button>
-                </div>
-
-                <div class="data-entry">
-                    <h3>Add Detailed Competency</h3>
-                    <form id="wca-form">
-                        <label>Competency Name: <input type="text" name="name" required></label>
-                        <label>Behavior Level:
-                            <select name="level">
-                                <option value="skill">Skill-Based</option>
-                                <option value="rule">Rule-Based</option>
-                                <option value="knowledge">Knowledge-Based</option>
-                            </select>
-                        </label>
-                        <label>Description: <textarea name="description" rows="3"></textarea></label>
-                        <label>Required For Strategy:
-                            <select name="straStrategy" id="wca-stra-link">
-                                <option value="">None</option>
-                            </select>
-                        </label>
-                        <label>Required For Actor:
-                            <select name="socaActor" id="wca-soca-link">
-                                <option value="">None</option>
-                            </select>
-                        </label>
-                        <label>Training Required: <input type="text" name="training"></label>
-                        <button type="submit">Add Competency</button>
-                    </form>
-                </div>
-
-                <div class="data-display">
-                    <h3>WCA Competencies <span class="count" id="wca-count">0</span></h3>
-                    <div id="wca-list" class="node-list"></div>
-                </div>
-            </section>
-        </main>
+                        </div>
+                    </div>
+                    <div id="integrated-network" class="network-viz-full"></div>
+                    <div class="viz-legend">
+                        <span><i style="background:#9333ea"></i>WDA</span>
+                        <span><i style="background:#2563eb"></i>Tasks</span>
+                        <span><i style="background:#059669"></i>Strategies</span>
+                        <span><i style="background:#d97706"></i>Actors</span>
+                        <span><i style="background:#dc2626"></i>Competencies</span>
+                    </div>
+                </main>
+            </div>
+        </section>
 
         <footer>
-            <div class="action-buttons">
-                <button onclick="exportAllData()" class="btn-primary">Export All Data (JSON)</button>
-                <button onclick="exportEdgeLists()" class="btn-primary">Export Edge Lists (CSV)</button>
-                <button onclick="importData()" class="btn-secondary">Import Data</button>
-                <button onclick="clearAllData()" class="btn-danger">Clear All Data</button>
+            <div class="footer-actions">
+                <button onclick="exportJSON()" class="btn">💾 Export JSON</button>
+                <button onclick="exportCSV()" class="btn">📊 Export Edge List</button>
+                <button onclick="importJSON()" class="btn">📥 Import JSON</button>
+                <button onclick="clearAll()" class="btn danger">🗑️ Clear All</button>
             </div>
             <div class="stats">
-                <p>Total Nodes: <span id="total-nodes">0</span> | Total Connections: <span id="total-connections">0</span></p>
+                <span>WDA: <strong id="stat-wda">0</strong></span>
+                <span>Tasks: <strong id="stat-conta">0</strong></span>
+                <span>Strategies: <strong id="stat-stra">0</strong></span>
+                <span>Actors: <strong id="stat-soca">0</strong></span>
+                <span>Competencies: <strong id="stat-wca">0</strong></span>
+                <span>Total: <strong id="stat-total">0</strong></span>
             </div>
         </footer>
     </div>
 
-    <input type="file" id="file-input" style="display: none;" accept=".json">
-
+    <input type="file" id="file-input" accept=".json" style="display:none">
     <script src="app.js"></script>
 </body>
 </html>
