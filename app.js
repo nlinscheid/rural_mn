@@ -100,7 +100,9 @@ function addNode(phase) {
     // Phase-specific properties
     if (phase === 'wda') {
         const levelSelect = document.getElementById('wda-level');
+        const parentSelect = document.getElementById('wda-parent');
         node.level = levelSelect.value;
+        if (parentSelect.value) node.parent = parentSelect.value;
     } else if (phase === 'conta') {
         const typeSelect = document.getElementById('conta-type');
         const wdaLink = document.getElementById('conta-wda-link');
@@ -162,6 +164,18 @@ function deleteNode(phase, id) {
 
 // Update dropdowns
 function updateDropdowns() {
+    // Update WDA parent dropdown
+    const wdaParent = document.getElementById('wda-parent');
+    if (wdaParent) {
+        wdaParent.innerHTML = '<option value="">Parent node (optional)...</option>';
+        cwaData.wda.forEach(node => {
+            const option = document.createElement('option');
+            option.value = node.id;
+            option.textContent = `${node.name} (${node.level})`;
+            wdaParent.appendChild(option);
+        });
+    }
+
     // Update ConTA WDA link dropdown
     const contaWdaLink = document.getElementById('conta-wda-link');
     if (contaWdaLink) {
@@ -303,6 +317,17 @@ function buildPhaseNetwork(phase) {
         });
 
         // Add edges based on relationships
+        if (phase === 'wda' && item.parent) {
+            // WDA hierarchical edges
+            edges.push({
+                from: item.parent,
+                to: item.id,
+                arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+                color: { color: '#94a3b8', highlight: '#64748b' },
+                width: 2
+            });
+        }
+
         if (phase === 'conta' && item.wdaNode) {
             // Link to WDA node
             const wdaNode = cwaData.wda.find(n => n.id === item.wdaNode);
@@ -387,21 +412,55 @@ function buildIntegratedNetwork() {
     });
 
     // Add edges
+    // WDA hierarchical edges
+    cwaData.wda.forEach(node => {
+        if (node.parent) {
+            edges.push({
+                from: node.parent,
+                to: node.id,
+                color: { color: '#9333ea' },
+                width: 2,
+                title: 'WDA Hierarchy'
+            });
+        }
+    });
+
+    // ConTA to WDA links
     cwaData.conta.forEach(task => {
         if (task.wdaNode) {
-            edges.push({ from: task.id, to: task.wdaNode, color: { color: '#94a3b8' } });
+            edges.push({
+                from: task.id,
+                to: task.wdaNode,
+                color: { color: '#2563eb' },
+                dashes: true,
+                title: 'Task → Domain'
+            });
         }
     });
 
+    // StrA to ConTA links
     cwaData.stra.forEach(strategy => {
         if (strategy.contaTask) {
-            edges.push({ from: strategy.id, to: strategy.contaTask, color: { color: '#94a3b8' } });
+            edges.push({
+                from: strategy.id,
+                to: strategy.contaTask,
+                color: { color: '#059669' },
+                dashes: true,
+                title: 'Strategy → Task'
+            });
         }
     });
 
+    // WCA to SOCA links
     cwaData.wca.forEach(competency => {
         if (competency.socaActor) {
-            edges.push({ from: competency.id, to: competency.socaActor, color: { color: '#94a3b8' } });
+            edges.push({
+                from: competency.id,
+                to: competency.socaActor,
+                color: { color: '#dc2626' },
+                dashes: true,
+                title: 'Competency → Actor'
+            });
         }
     });
 

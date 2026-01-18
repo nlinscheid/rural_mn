@@ -75,9 +75,10 @@ A fully interactive web-based tool for conducting Cognitive Work Analysis (CWA) 
 ### Building Your CWA Model
 
 1. **Start with Work Domain (WDA)**
-   - Define your functional purpose at the top
-   - Add values, functions, processes, and physical objects
-   - Watch the hierarchy build in real-time
+   - Add your first node (e.g., "System Goal" as Functional Purpose)
+   - Add child nodes and select the parent from the dropdown
+   - Watch the hierarchy build in real-time with connecting lines
+   - Build top-down: Purpose → Values → Functions → Processes → Physical
 
 2. **Add Tasks (ConTA)**
    - Define what needs to be accomplished
